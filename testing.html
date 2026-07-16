@@ -1,0 +1,2047 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RAJ MOBILE INVENTORY </title>
+    
+    <script>
+        // Instant check to avoid flashing of Login screen
+        try {
+            if (localStorage.getItem('isAuthenticated') === 'true') {
+                document.documentElement.classList.add('pre-auth');
+            }
+        } catch (e) {
+            console.warn("Storage access not available:", e);
+        }
+    </script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --------------------------------------------------------------------------
+           1. PREMIUM DARK NEON DESIGN SYSTEM
+           -------------------------------------------------------------------------- */
+        :root {
+            --primary: #00f0ff; /* Neon Cyan */
+            --primary-hover: #00b8d4;
+            --primary-light: rgba(0, 240, 255, 0.15);
+            --secondary: #64748b;
+            --success: #0df2c9; /* Neon Emerald */
+            --success-bg: rgba(13, 242, 201, 0.1);
+            --danger: #ff0055; /* Neon Pink/Red */
+            --danger-bg: rgba(255, 0, 85, 0.1);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.1);
+            --bg-body: #0a0f1d; /* Deep Space Cyber Black */
+            --surface: rgba(18, 24, 38, 0.75); /* Premium Glass Card */
+            --surface-solid: #121826;
+            --sidebar-bg: #070a13;
+            --sidebar-hover: #161f32;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --border: rgba(0, 240, 255, 0.15); /* Sleek Cyan Neon border */
+            --radius: 12px;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 15px rgba(0, 240, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.6);
+            --shadow-lg: 0 4px 25px rgba(0, 240, 255, 0.15), 0 12px 45px rgba(0, 0, 0, 0.8);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --neon-glow: 0 0 10px rgba(0, 240, 255, 0.35);
+            
+            /* Analytics Specific */
+            --chart-line: #00f0ff;
+            --chart-bar-buy: #64748b;
+            --chart-bar-sell: #0df2c9;
+            --chart-grid: rgba(255, 255, 255, 0.05);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            background-image: radial-gradient(rgba(0, 240, 255, 0.08) 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-main);
+            /* Default Desktop Behavior: App Shell (Hidden Body Scroll) */
+            height: 100vh;
+            height: 100dvh; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Pre-auth state layout control */
+        html.pre-auth #auth-container { display: none !important; }
+        html.pre-auth #app-container { display: flex !important; }
+
+        /* SVG Icons */
+        .icon { width: 20px; height: 20px; stroke-width: 2; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .icon-sm { width: 16px; height: 16px; }
+        .icon-lg { width: 24px; height: 24px; opacity: 0.2; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .w-full { width: 100%; }
+        .font-bold { font-weight: 600; }
+        .text-red { color: var(--danger); text-shadow: 0 0 6px rgba(255, 0, 85, 0.3); }
+        .text-green { color: var(--success); text-shadow: 0 0 6px rgba(13, 242, 201, 0.3); }
+        .text-center { text-align: center; }
+
+        /* Highlight Treatment for Prices and Quantities */
+        .highlight-price {
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+        }
+        .highlight-qty {
+            font-weight: 700;
+            color: var(--success);
+            text-shadow: 0 0 8px rgba(13, 242, 201, 0.35);
+        }
+        .highlight-qty.low {
+            color: var(--danger);
+            text-shadow: 0 0 8px rgba(255, 0, 85, 0.35);
+        }
+
+        /* Interactive Elements */
+        .interactive-card {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .interactive-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        /* Buttons */
+        button {
+            padding: 0.75rem 1.25rem; border-radius: var(--radius); border: none; font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary), #8b5cf6); 
+            color: #070a13; 
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25); 
+        }
+        .btn-primary:hover:not(:disabled) { 
+            background: linear-gradient(135deg, #00d1e0, #7c3aed); 
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.5); 
+            transform: translateY(-1px); 
+        }
+        .btn-secondary { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid var(--border); 
+            color: var(--text-main); 
+        }
+        .btn-secondary:hover:not(:disabled) { 
+            background: rgba(0, 240, 255, 0.08); 
+            border-color: var(--primary); 
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2); 
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, var(--danger), #b91c1c); 
+            color: white; 
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.2); 
+        }
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 0 18px rgba(255, 0, 85, 0.4);
+            transform: translateY(-1px);
+        }
+        .icon-btn { padding: 0.5rem; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+        /* Inputs */
+        .input-group { margin-bottom: 1.25rem; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        input, select {
+            width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);
+            font-size: 0.95rem; background: rgba(7, 10, 19, 0.6); color: var(--text-main); transition: var(--transition);
+        }
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25); 
+        }
+
+        /* Auth Screen */
+        #auth-container {
+            position: fixed; inset: 0; z-index: 5000;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at center, #121826 0%, #070a13 100%);
+        }
+        .auth-box {
+            background: rgba(18, 24, 38, 0.85); backdrop-filter: blur(20px); width: 100%; max-width: 400px; padding: 2.5rem;
+            border-radius: 16px; box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), var(--shadow-lg); border: 1px solid rgba(0, 240, 255, 0.2);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 2rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .logo span { color: var(--primary); text-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
+
+        /* Profile & Avatar Styles */
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--primary-light); border: 2px solid var(--primary); box-shadow: 0 2px 8px rgba(0, 240, 255, 0.25); }
+        .avatar-lg { width: 80px; height: 80px; border: 3px solid var(--primary); box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+        .profile-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+        .profile-info h3 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.25rem; }
+        .profile-info p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+        .sidebar-user-container { display: flex; align-items: center; gap: 12px; width: 100%; overflow: hidden; }
+
+        /* Sidebar */
+        aside {
+            width: 260px; background: var(--sidebar-bg); color: #94a3b8; display: flex; flex-direction: column;
+            transition: transform 0.3s ease; z-index: 1000; border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .brand-area { padding: 1.5rem; font-size: 1.25rem; font-weight: 700; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        nav { flex: 1; padding: 1.5rem 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item {
+            padding: 0.75rem 1rem; border-radius: var(--radius); cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; gap: 12px; font-weight: 500; color: #cbd5e1;
+        }
+        .nav-item:hover { background: var(--sidebar-hover); color: white; }
+        .nav-item.active { 
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%); 
+            color: var(--primary); 
+            border-left: 3px solid var(--primary);
+            box-shadow: inset 5px 0 10px rgba(0, 240, 255, 0.05);
+        }
+        .nav-item svg { width: 20px; height: 20px; stroke-width: 2; }
+        
+        /* Sidebar Overlay for Mobile */
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 900;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Fixed Bottom Footer Bar */
+        .bottom-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(18, 24, 38, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1500;
+            box-shadow: 0 -4px 25px rgba(0, 240, 255, 0.15);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .footer-item {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 33%;
+            height: 100%;
+            padding: 0;
+        }
+        .footer-item:hover, .footer-item.active {
+            color: var(--primary);
+            text-shadow: var(--neon-glow);
+        }
+        .footer-item svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* Main Wrapper */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        header {
+            height: 60px; background: rgba(18, 24, 38, 0.8); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+            display: none; align-items: center; justify-content: space-between; padding: 0 1rem;
+        }
+        
+        main { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 2rem; 
+            padding-bottom: 140px; /* Extra padding for bottom navigation area */
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        /* Dashboard */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--surface); backdrop-filter: blur(12px); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); position: relative; transition: var(--transition); }
+        .stat-card:hover { border-color: rgba(0, 240, 255, 0.35); box-shadow: 0 0 15px rgba(0, 240, 255, 0.15), var(--shadow-md); }
+        .stat-title { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 2rem; font-weight: 700; margin-top: 0.5rem; color: var(--text-main); text-shadow: 0 0 10px rgba(255, 255, 255, 0.05); }
+        .stat-icon { position: absolute; right: 1.5rem; top: 1.5rem; color: var(--primary); opacity: 0.25; }
+
+        /* Tables & Cards */
+        .card { background: var(--surface); backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden; transition: var(--transition); }
+        .card:hover { border-color: rgba(0, 240, 255, 0.25); }
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        th { text-align: left; padding: 1rem 1.5rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); background: rgba(7, 10, 19, 0.8); border-bottom: 1px solid var(--border); }
+        td { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.9rem; color: var(--text-main); }
+        tr:hover td { background: rgba(0, 240, 255, 0.03); }
+
+        /* Premium Ecommerce Grid System */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .product-card {
+            background: var(--surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .product-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), var(--shadow-lg);
+        }
+        .product-card-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border);
+        }
+        .product-card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+        .product-card:hover .product-card-img {
+            transform: scale(1.05);
+        }
+        .product-card-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 5;
+        }
+        .product-card-body {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: 0.5rem;
+        }
+        .product-card-sku {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .product-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .product-card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            margin-top: auto;
+        }
+        .product-card-footer {
+            padding: 0.75rem 1rem;
+            background: rgba(7, 10, 19, 0.6);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+        }
+        .product-card-footer button {
+            flex: 1;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        /* Badges */
+        .badge { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .badge.success { background: var(--success-bg); color: var(--success); text-shadow: 0 0 4px rgba(13, 242, 201, 0.2); }
+        .badge.danger { background: var(--danger-bg); color: var(--danger); text-shadow: 0 0 4px rgba(255, 0, 85, 0.2); }
+        .badge.warning { background: var(--warning-bg); color: var(--warning); }
+        .badge.neutral { background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.08); }
+
+        /* Image Grid */
+        .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
+        .img-card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; transition: var(--transition); }
+        .img-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 0 15px rgba(0, 240, 255, 0.15), var(--shadow-md); }
+        .img-card img { width: 100%; height: 140px; object-fit: cover; }
+        .img-details { padding: 1rem; }
+
+        /* ANALYTICS MODULE STYLES */
+        .analytics-control { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        .analytics-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .kpi-box { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; transition: var(--transition); }
+        .kpi-box:hover { border-color: rgba(0, 240, 255, 0.3); box-shadow: 0 0 10px rgba(0, 240, 255, 0.1); }
+        .kpi-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.5rem; }
+        .kpi-val { font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .kpi-sub { font-size: 0.8rem; margin-top: 0.25rem; }
+        
+        .chart-wrapper { background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; height: 350px; position: relative; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 600; font-size: 0.9rem; }
+        .chart-legend { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 2px; }
+        
+        /* SVG Charts */
+        svg.chart { width: 100%; height: 100%; overflow: visible; }
+        .chart-axis-line { stroke: var(--chart-grid); stroke-width: 1; }
+        .chart-axis-text { font-size: 10px; fill: var(--text-muted); }
+        .chart-line-path { fill: none; stroke: var(--chart-line); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(0, 240, 255, 0.3)); }
+        .chart-bar { transition: opacity 0.2s; }
+        .chart-bar:hover { opacity: 0.8; filter: brightness(1.2); }
+        .chart-tooltip {
+            position: absolute; background: #070a13; color: white; padding: 6px 10px; border-radius: 4px;
+            font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.2s; white-space: nowrap; z-index: 4000; border: 1px solid var(--primary); box-shadow: var(--neon-glow);
+        }
+
+        /* Premium Responsive Modal (Glassmorphic) */
+        .overlay {
+            position: fixed; 
+            inset: 0; 
+            background: rgba(5, 8, 16, 0.85); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 3000; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+        .modal { 
+            background: linear-gradient(145deg, rgba(18, 24, 38, 0.95), rgba(10, 15, 28, 0.98)); 
+            border: 1px solid rgba(0, 240, 255, 0.25); 
+            width: 90%; 
+            max-width: 640px; 
+            border-radius: 20px; 
+            padding: 2.5rem; 
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.15), var(--shadow-lg); 
+            transform: scale(0.9) translateY(20px); 
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+            position: relative;
+        }
+        .overlay.active .modal { transform: scale(1) translateY(0); }
+
+        /* Premium Toast Custom Placement */
+        #toast {
+            position: fixed; 
+            top: 24px; 
+            right: 24px; 
+            background: #121826; 
+            color: white;
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4), var(--shadow-lg); 
+            border: 1px solid var(--border); 
+            transform: translateY(-150%); 
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); 
+            z-index: 12000; /* Placed above all overlays, sidebars, and modals */
+        }
+        #toast.active { transform: translateY(0); }
+        #toast.success { background: var(--success); color: #070a13; border-color: #0df2c9; box-shadow: 0 0 20px rgba(13, 242, 201, 0.6); }
+        #toast.error { background: var(--danger); color: white; border-color: #ff0055; box-shadow: 0 0 20px rgba(255, 0, 85, 0.6); }
+
+        /* Close Button for Sidebar on Mobile */
+        .sidebar-close { display: none; background: none; border: none; color: white; cursor: pointer; }
+
+        /* --------------------------------------------------------------------------
+           RESPONSIVE FIXES (Mobile Specific)
+           -------------------------------------------------------------------------- */
+        @media (max-width: 900px) {
+            header { display: flex; }
+            aside { 
+                position: fixed; height: 100%; transform: translateX(-100%); width: 280px; 
+                box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+                z-index: 1000;
+            }
+            aside.open { transform: translateX(0); }
+            .sidebar-close { display: block; }
+            .stat-grid { grid-template-columns: 1fr; }
+            /* Analytics KPI Grid Fix */
+            .analytics-kpi { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* STRICT MOBILE FIX (Max-Width 768px) */
+        @media (max-width: 768px) {
+            /* 1. Unlock Page Height & Scroll */
+            body {
+                height: auto !important;
+                min-height: 100dvh;
+                overflow-y: auto !important; /* Enable native document scroll */
+                overflow-x: hidden;
+                display: block !important; /* Remove flex constraint */
+            }
+            
+            .main-wrapper {
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            main {
+                height: auto !important;
+                overflow: visible !important; /* Remove inner scroll */
+                padding: 1.5rem 1rem 120px 1rem !important; /* Adjust padding for Bottom Bar */
+            }
+
+            /* 2. Responsive Charts */
+            .chart-wrapper {
+                height: 300px !important; /* Mobile safe height for SVG */
+                min-height: 300px !important;
+                width: 100% !important;
+                margin-bottom: 1.5rem;
+            }
+            
+            /* 3. Stack Grids Vertically */
+            .grid {
+                display: flex !important;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            /* Ensure Sidebar stays fixed on top of scrollable body */
+            aside {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+            }
+
+            /* Mobile Half-Over Sheet Modal */
+            .overlay {
+                align-items: flex-end;
+            }
+            .modal {
+                width: 100%;
+                max-width: 100%;
+                border-radius: 24px 24px 0 0;
+                border-bottom: none;
+                border-left: none;
+                border-right: none;
+                padding: 2rem 1.5rem;
+                max-height: 90vh;
+                transform: translateY(100%);
+                transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .overlay.active .modal {
+                transform: translateY(0);
+            }
+
+            /* Mobile safe area top placement for toast notification */
+            #toast {
+                right: 16px;
+                left: 16px;
+                top: calc(12px + env(safe-area-inset-top));
+                transform: translateY(-200%);
+            }
+            #toast.active { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST -->
+    <div id="toast">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+        <span id="toast-msg">Notification</span>
+    </div>
+
+    <!-- AUTH -->
+    <div id="auth-container">
+        <div class="auth-box">
+            <div class="logo">
+                <svg class="icon" style="width:32px; height:32px; color:var(--primary); filter: drop-shadow(0 0 5px var(--primary));" viewBox="0 0 24 24"><path d="M21 16.5C21 16.88 20.79 17.21 20.47 17.38L12.57 21.82C12.41 21.94 12.21 22 12 22C11.79 22 11.59 21.94 11.43 21.82L3.53 17.38C3.21 17.21 3 16.88 3 16.5V7.5C3 7.12 3.21 6.79 3.53 6.62L11.43 2.18C11.59 2.06 11.79 2 12 2C12.21 2 12.41 2.06 12.57 2.18L20.47 6.62C20.79 6.79 21 7.12 21 7.5V16.5Z"/></svg>
+                RAJ <span style="color: var(--primary); text-shadow: 0 0 10px var(--primary);">INVENTORY</span>
+            </div>
+            
+            <div id="login-form">
+                <div style="text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; color:var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;">
+                    Admin Sign In
+                </div>
+                <div class="input-group">
+                    <label>Admin Email</label>
+                    <input type="email" id="login-email" placeholder="admin@nexus.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                <button class="btn-primary w-full" id="btn-login" onclick="authLogin()">
+                    Sign In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div id="app-container" class="hidden">
+        
+        <!-- Sidebar Overlay for Click-Outside-To-Close -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <aside id="sidebar">
+            <div class="brand-area">
+                <div class="flex items-center gap-2">
+                    <svg class="icon" style="color: var(--primary);" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    RAJ MOBILE<span style="color: var(--primary);">INV</span>
+                </div>
+                <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="navTo('dashboard')">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    Dashboard
+                </div>
+                <div class="nav-item" onclick="navTo('items')">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44A.991.991 0 0 1 12 2c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"/></svg>
+                    Inventory
+                </div>
+                <div class="nav-item" onclick="navTo('purchase')">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    Procurement
+                </div>
+                <div class="nav-item" onclick="navTo('sell')">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm-1 14H5c-.55 0-1-.45-1-1v-5h16v5c0 .55-.45 1-1 1zm1-10H4V6h16v2z"/></svg>
+                    Point of Sale
+                </div>
+                <div class="nav-item" onclick="navTo('reports')">
+                    <svg viewBox="0 0 24 24" class="icon"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                    Profit & Analytics
+                </div>
+            </nav>
+            <div style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;">
+                <div class="sidebar-user-container">
+                    <img id="sidebar-avatar" class="avatar" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMgMy0xLjM0IDMtMyAxLjM0LTMgMy0M3em0wIDE0LjJjLTIuNSAwLTQuNzEtMS4yOC02LTMuMjIuMDMtMS45OSA0LTMuMDggNi0zLjA4IDEuOTkgMCA1Ljk3IDEuMDkgNiAzLjA4LTEuMjkgMS45NC0zLjUgMy4yMi02IDMuMjJ6Ii8+PC9zdmc+">
+                    <div>
+                        <div id="user-display-name" style="color:white; font-weight:600; font-size:0.9rem;">...</div>
+                        <div id="user-role" style="font-size:0.75rem; color: var(--primary);">Admin</div>
+                    </div>
+                </div>
+                <button onclick="authLogout()" class="icon-btn" style="background:rgba(239, 68, 68, 0.2); color:#ef4444; width:32px; height:32px;">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+                </button>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header>
+                <button class="icon-btn btn-secondary" onclick="toggleSidebar()">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                </button>
+                <div style="font-weight:700;">RAJ MOBILE <span style="color: var(--primary);">INVENTORY</span></div>
+                <div style="width:36px"></div>
+            </header>
+
+            <main>
+                <!-- DASHBOARD -->
+                <section id="dashboard" class="page-section fade-in">
+                    <h2 class="mb-4">Overview</h2>
+                    <div class="stat-grid">
+                        <div class="stat-card interactive-card" onclick="navTo('items')">
+                            <div class="stat-title">Total Items</div>
+                            <div class="stat-value" id="dash-total-items">0</div>
+                            <svg class="icon stat-icon icon-lg" viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44A.991.991 0 0 1 12 2c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"/></svg>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Stock Value</div>
+                            <div class="stat-value highlight-price" id="dash-stock-value">$0.00</div>
+                            <svg class="icon stat-icon icon-lg" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                        </div>
+                        <div class="stat-card font-bold" style="border-left:4px solid var(--danger);">
+                            <div class="stat-title text-red">Low Stock</div>
+                            <div class="stat-value text-red highlight-qty low" id="dash-low-stock">0</div>
+                            <svg class="icon stat-icon icon-lg" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                        </div>
+                        <div class="stat-card" style="border-left:4px solid var(--success);">
+                            <div class="stat-title text-green">Sales (Today)</div>
+                            <div class="stat-value text-green highlight-price" id="dash-sales">$0.00</div>
+                            <svg class="icon stat-icon icon-lg" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;">
+                        <div class="card">
+                            <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                                <h3 class="font-bold text-shadow">Low Stock Alerts</h3>
+                                <button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem" onclick="navTo('purchase')">Reorder</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table>
+                                    <thead><tr><th>Item</th><th>Loc</th><th>Qty</th><th>Status</th></tr></thead>
+                                    <tbody id="dash-low-stock-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); font-weight:bold;">Activity Log</div>
+                            <div style="padding:1.5rem; color:var(--text-muted); font-size:0.9rem;">
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <div style="width:8px; height:8px; background:var(--success); border-radius:50%; box-shadow: 0 0 8px var(--success)"></div>
+                                    System Online
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ITEMS -->
+                <section id="items" class="page-section hidden fade-in">
+                    <div class="flex justify-between items-center mb-6 gap-4" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; flex-wrap: wrap;">
+                        <div class="flex items-center gap-3">
+                            <!-- Premium SVG Icon for Inventory instead of raw text -->
+                            <div style="background: var(--primary-light); padding: 10px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--border); box-shadow: var(--neon-glow);">
+                                <svg viewBox="0 0 24 24" class="icon" style="color: var(--primary); width: 24px; height: 24px;"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18s-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44A.991.991 0 0 1 12 2c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15z"/></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3" style="flex: 1; justify-content: flex-end; min-width: 280px; max-width: 600px;">
+                            <!-- Search Bar with internal absolute search icon -->
+                            <div style="position: relative; flex: 1;">
+                                <input type="text" placeholder="Search products by name or SKU..." id="item-search" onkeyup="renderItems()" style="width: 100%; padding-left: 2.75rem; height: 44px;">
+                                <svg class="icon" style="position: absolute; left: 14px; top: 12px; color: var(--text-muted); width: 18px; height: 18px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </div>
+                            <!-- Add button shifted left for spacing -->
+                            <button class="btn-primary" onclick="openModal('item-modal', 'add')" style="height: 44px; white-space: nowrap; margin-right: 12px;">
+                                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Add Product
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ECOMMERCE CARDS CONTAINER -->
+                    <div id="inventory-grid" class="product-grid"></div>
+                </section>
+
+                <!-- PURCHASE -->
+                <section id="purchase" class="page-section hidden fade-in">
+                    <h2 class="mb-4">Procurement</h2>
+                    <div class="grid" style="display:grid; grid-template-columns: 1fr 2fr; gap:1.5rem;">
+                        <div class="card" style="padding:1.5rem; height:fit-content;">
+                            <h3 class="font-bold mb-4">New Order</h3>
+                            <div class="input-group">
+                                <label>Item</label>
+                                <select id="po-item-select"></select>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="input-group w-full"><label>Qty</label><input type="number" id="po-qty" value="10" min="1"></div>
+                            </div>
+                            <div class="input-group"><label>Supplier</label><input type="text" id="po-supplier" placeholder="Vendor Inc"></div>
+                            <button class="btn-primary w-full" onclick="createPurchaseOrder()">Create Order</button>
+                        </div>
+                        <div class="card table-responsive">
+                            <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); font-weight:bold;">Order History</div>
+                            <table>
+                                <thead><tr><th>PO#</th><th>Item</th><th>Supplier</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead>
+                                <tbody id="po-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- POS -->
+                <section id="sell" class="page-section hidden fade-in">
+                    <h2 class="mb-4">Point of Sale</h2>
+                    <div class="grid" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:1.5rem;">
+                        <div class="card" style="padding:2rem;">
+                            <div class="input-group">
+                                <label>Product</label>
+                                <select id="pos-item-select" onchange="updatePosPrice()"></select>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="input-group w-full"><label>Price</label><input type="number" id="pos-price" readonly style="background: rgba(255,255,255,0.05);"></div>
+                                <div class="input-group w-full"><label>Qty</label><input type="number" id="pos-qty" value="1" min="1" onchange="updatePosTotal()"></div>
+                            </div>
+                            <div class="input-group"><label>Tax %</label><input type="number" id="pos-tax" value="0" min="0" onchange="updatePosTotal()"></div>
+                            <div style="text-align:right; margin:2rem 0;">
+                                <div style="color:var(--text-muted); font-size:0.9rem;">Total Payable</div>
+                                <div style="font-size:2.5rem; font-weight:800;" class="highlight-price" id="pos-total">0.00</div>
+                            </div>
+                            <button class="btn-primary w-full" style="padding:1rem;" onclick="processSale()">Complete Sale</button>
+                        </div>
+                        <div class="card table-responsive">
+                            <div style="padding:1rem 1.5rem; border-bottom:1px solid var(--border); font-weight:bold;">Recent Sales</div>
+                            <table>
+                                <thead><tr><th>Time</th><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+                                <tbody id="sales-history-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ANALYTICS / REPORTS -->
+                <section id="reports" class="page-section hidden fade-in">
+                    <div class="analytics-control">
+                        <h2>Profit & Business Analytics</h2>
+                        <div class="flex gap-2">
+                            <input type="date" id="analytics-start">
+                            <input type="date" id="analytics-end">
+                            <button class="btn-secondary" onclick="updateAnalytics()">Update View</button>
+                        </div>
+                    </div>
+
+                    <!-- Business KPIs -->
+                    <div class="analytics-kpi">
+                        <div class="kpi-box">
+                            <div class="kpi-label">Gross Sales</div>
+                            <div class="kpi-val highlight-price" id="kpi-sales">$0.00</div>
+                            <div class="kpi-sub text-green">Revenues</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-label">Total Cost</div>
+                            <div class="kpi-val" id="kpi-cost">$0.00</div>
+                            <div class="kpi-sub text-muted">COGS</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-label">Net Profit</div>
+                            <div class="kpi-val" id="kpi-profit">$0.00</div>
+                            <div class="kpi-sub" id="kpi-margin">0% Margin</div>
+                        </div>
+                        <div class="kpi-box">
+                            <div class="kpi-label">Avg Order Value</div>
+                            <div class="kpi-val highlight-price" id="kpi-aov">$0.00</div>
+                            <div class="kpi-sub text-muted">Per Transaction</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem;">
+                        <!-- Profit Trend -->
+                        <div class="chart-wrapper">
+                            <div class="chart-header">
+                                <span>Profit Trend (Daily)</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted)">Net Earnings</span>
+                            </div>
+                            <div id="chart-profit-container" style="position:relative; height:calc(100% - 40px);"></div>
+                            <div class="chart-legend">
+                                <div class="legend-item"><div class="legend-color" style="background:var(--chart-line)"></div> Profit</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Volume Analysis -->
+                        <div class="chart-wrapper">
+                            <div class="chart-header">
+                                <span>Volume Analysis</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted)">Sold vs Bought</span>
+                            </div>
+                            <div id="chart-volume-container" style="position:relative; height:calc(100% - 40px);"></div>
+                            <div class="chart-legend">
+                                <div class="legend-item"><div class="legend-color" style="background:var(--chart-bar-buy)"></div> Bought</div>
+                                <div class="legend-item"><div class="legend-color" style="background:var(--chart-bar-sell)"></div> Sold</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing Image Grid (Preserved) -->
+                    <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid var(--border);">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 style="font-size:1rem; font-weight:600;">Visual Inventory Gallery</h3>
+                            <select id="report-filter" style="width:150px;" onchange="renderReports()">
+                                <option value="all">All Items</option>
+                                <option value="lowstock">Low Stock</option>
+                            </select>
+                        </div>
+                        <div class="report-grid" id="report-grid-container"></div>
+                    </div>
+                </section>
+
+                <!-- PROFILE SETTINGS -->
+                <section id="settings" class="page-section hidden fade-in">
+                    <div style="max-width:600px; margin:0 auto;">
+                        <h2 class="mb-4">Profile Settings</h2>
+                        
+                        <!-- Profile Card -->
+                        <div class="card" style="padding: 2rem; margin-bottom: 2rem;">
+                            <div class="profile-header">
+                                <img id="settings-avatar" src="" class="avatar avatar-lg">
+                                <div class="profile-info">
+                                    <h3 id="settings-name">...</h3>
+                                    <p id="settings-email">...</p>
+                                    <label class="upload-label" style="font-size:0.8rem; color:var(--primary); cursor:pointer;">
+                                        Change Photo
+                                        <input type="file" id="settings-avatar-input" class="hidden" accept="image/*" onchange="updateProfilePic(this)">
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label>Update Name</label>
+                                <input type="text" id="profile-name-input">
+                            </div>
+                            <div class="input-group">
+                                <label>Update Email</label>
+                                <input type="email" id="profile-email-input">
+                            </div>
+                            <button class="btn-primary w-full" onclick="updateUserProfile()" style="margin-bottom:1rem;">Update Profile Info</button>
+                            
+                            <!-- Secure Password Change System -->
+                            <div style="border-top:1px solid var(--border); padding-top:1rem; margin-top:1rem;">
+                                <h4 class="mb-4 font-bold" style="font-size:0.9rem;">Change Password</h4>
+                                
+                                <div id="password-change-form">
+                                    <div class="input-group">
+                                        <label>Current Password</label>
+                                        <input type="password" id="profile-old-pass" placeholder="Required to set new password">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>New Password</label>
+                                        <input type="password" id="profile-new-pass">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Confirm New Password</label>
+                                        <input type="password" id="profile-confirm-pass">
+                                    </div>
+                                    <button class="btn-secondary w-full" onclick="updateUserPassword()">Update Password</button>
+                                </div>
+
+                                <!-- Forgot Password Option -->
+                                <div id="forgot-pass-container" class="hidden" style="margin-top:1rem; text-align:center; background:var(--warning-bg); padding:1rem; border-radius:var(--radius); border:1px solid var(--warning);">
+                                    <p style="color:var(--warning); font-size:0.85rem; margin-bottom:0.5rem; font-weight:600;">Incorrect Password?</p>
+                                    <button class="btn-primary" style="font-size:0.8rem;" onclick="triggerPasswordReset()">Send Password Reset Email</button>
+                                </div>
+                            </div>
+
+                            <!-- Factory Reset Section -->
+                            <div style="border-top: 1px solid var(--danger); padding-top: 1.5rem; margin-top: 1.5rem;">
+                                <h4 class="mb-2 font-bold text-red" style="font-size: 0.9rem;">Dangerous Area</h4>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;">Factory reset will permanently wipe your inventory database, orders, sales logs, and user categories. This action cannot be undone.</p>
+                                <button class="btn-danger w-full" onclick="factoryResetInventory()" style="background: linear-gradient(135deg, #ff0055, #990022); box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);">
+                                    ⚠ Factory Reset Database
+                                </button>
+                            </div>
+
+                            <hr style="margin:2rem 0; border:0; border-top:1px solid var(--border);">
+                            <button class="btn-danger w-full" onclick="authLogout()">
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <!-- FIXED BOTTOM FOOTER BAR -->
+            <div class="bottom-footer">
+                <button class="footer-item active" id="footer-home" onclick="navTo('dashboard')">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Home</span>
+                </button>
+                <button class="footer-item" id="footer-codemaker" onclick="window.location.href='Codemaker.html'">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    <span>CODE MAKER</span>
+                </button>
+                <button class="footer-item" id="footer-profile" onclick="navTo('settings')">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Profile</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="overlay" id="item-modal">
+        <div class="modal">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg" id="modal-title">Item Details</h3>
+                <button onclick="closeModal('item-modal')" class="icon-btn btn-secondary">✕</button>
+            </div>
+            <div class="grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                
+                <!-- Product Preview Image -->
+                <div style="text-align: center; width: 100%; grid-column: span 2;">
+                    <img id="prev" src="" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 12px; border: 1px solid rgba(0, 240, 255, 0.25); display: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); margin: 0 auto 12px auto; cursor: zoom-in;" onclick="openImagePreview(this.src, document.getElementById('item-name').value || 'Product Preview')">
+                </div>
+
+                <div class="input-group" style="grid-column:span 2;"><label>Name</label><input type="text" id="item-name"><input type="hidden" id="item-id"></div>
+                
+                <!-- Persistent Dynamic Category Dropdown -->
+                <div class="input-group" style="grid-column:span 2;">
+                    <label>Category</label>
+                    <select id="item-category" onchange="onCategorySelectChange(this)"></select>
+                    <input type="text" id="item-category-new" class="hidden" placeholder="Enter new category name" style="margin-top: 8px;">
+                </div>
+                
+                <div class="input-group"><label>Location</label><input type="text" id="item-location"></div>
+                <div class="input-group"><label>Cost ($)</label><input type="number" id="item-cost" min="0"></div>
+                <div class="input-group"><label>Price ($)</label><input type="number" id="item-price" min="0"></div>
+                <div class="input-group"><label>Stock</label><input type="number" id="item-qty" min="0"></div>
+                <div class="input-group" style="grid-column:span 2;"><label>Min Alert</label><input type="number" id="item-min" min="0"></div>
+                
+                <!-- Phone Gallery Image Input -->
+                <div class="input-group" style="grid-column:span 2;">
+                    <label>Product Image</label>
+                    <input type="file" id="item-image-file" class="hidden" accept="image/*">
+                    <button type="button" class="btn-secondary w-full" onclick="document.getElementById('item-image-file').click()" style="gap:8px;">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0-2-.9-2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg> Choose from Phone Gallery
+                    </button>
+                    <input type="hidden" id="item-image-base64">
+                </div>
+            </div>
+            <div class="flex gap-2" style="margin-top:1rem;">
+                <button class="btn-primary w-full" onclick="saveItem()">Save Item</button>
+                <button class="btn-danger hidden" id="btn-delete-item" onclick="deleteItem()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREMIUM IMAGE PREVIEW OVERLAY -->
+    <div class="overlay" id="image-preview-modal" onclick="closeModal('image-preview-modal')" style="z-index: 13000;">
+        <div class="modal" style="max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(5, 8, 16, 0.95); border-color: var(--primary);" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center w-full mb-3">
+                <h3 class="font-bold text-lg" id="image-preview-title" style="color: var(--primary); text-shadow: var(--neon-glow);">Image Preview</h3>
+                <button onclick="closeModal('image-preview-modal')" class="icon-btn btn-secondary">✕</button>
+            </div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; width: 100%; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); padding: 10px;">
+                <img id="image-preview-img" src="" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; box-shadow: 0 0 20px rgba(0,240,255,0.15);">
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getDatabase, ref, onValue, push, set, update, get, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        // ---------------------------------------------------------
+        // 1. CONFIGURATION
+        // ---------------------------------------------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyBe83aRflV8KWXbjq6UIN8iEHwo8vFnDIs",
+            authDomain: "raj-reparing.firebaseapp.com",
+            databaseURL: "https://raj-reparing-default-rtdb.firebaseio.com",
+            projectId: "raj-reparing",
+            storageBucket: "raj-reparing.firebasestorage.app",
+            messagingSenderId: "870949595071",
+            appId: "1:870949595071:web:ac0a99b53acfcf8305230a"
+        };
+
+        let app, auth, db;
+        const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjQ3NDhiIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMgMy0xLjM0IDMtMyAxLjM0LTMgMy0M3em0wIDE0LjJjLTIuNSAwLTQuNzEtMS4yOC02LTMuMjIuMDMtMS45OSA0LTMuMDggNi0zLjA4IDEuOTkgMCA1Ljk3IDEuMDkgNiAzLjA4LTEuMjkgMS45NC0zLjUgMy4yMi02IDMuMjJ6Ii8+PC9zdmc+";
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getDatabase(app);
+            console.log("Firebase Initialized");
+        } catch (e) {
+            console.error(e);
+            alert("Firebase Init Error: Check Console");
+        }
+
+        // ---------------------------------------------------------
+        // 2. GLOBAL STATE
+        // ---------------------------------------------------------
+        let inventory = {};
+        let prevInventory = null; // Track previous state to detect threshold crossing
+        let orders = {};
+        let sales = {};
+        let categories = ['Electronics', 'Office']; // Dynamic categories list with default fallbacks
+        let currentUserUid = null;
+        const $ = (id) => document.getElementById(id);
+        const fmt = (n) => '$' + parseFloat(n).toFixed(2);
+
+        // ---------------------------------------------------------
+        // 3. UI HELPERS & PROFILE
+        // ---------------------------------------------------------
+        window.showToast = (msg, type = 'neutral') => {
+            const t = $('toast');
+            $('toast-msg').innerText = msg;
+            t.className = type + ' active';
+            setTimeout(() => {
+                if (t.className.includes('active') && $('toast-msg').innerText === msg) {
+                    t.className = '';
+                }
+            }, 3000);
+        };
+
+        // Premium Notification Dispatcher
+        window.notifyLowStock = (item) => {
+            const title = "Low Stock Alert";
+            const body = `${item.name} is running low.`;
+            
+            // Custom Neon Toast notification
+            window.showToast(`${title}: ${body}`, "error");
+
+            // Native Web Notification API if permitted
+            if (typeof Notification !== 'undefined') {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, { body: body });
+                } else if (Notification.permission === 'default') {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            new Notification(title, { body: body });
+                        }
+                    });
+                }
+            }
+        };
+
+        // Click-to-Preview System Engine
+        window.openImagePreview = (src, title = "Image Preview") => {
+            if (!src) src = 'https://via.placeholder.com/150';
+            const previewImg = $('image-preview-img');
+            const previewTitle = $('image-preview-title');
+            if (previewImg && previewTitle) {
+                previewImg.src = src;
+                previewTitle.innerText = title;
+                openModal('image-preview-modal');
+            }
+        };
+
+        // Improved Sidebar Toggle
+        window.toggleSidebar = () => {
+            const sb = $('sidebar');
+            const overlay = $('sidebar-overlay');
+            sb.classList.toggle('open');
+            overlay.classList.toggle('active');
+        };
+
+        window.navTo = (id) => {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            $(id).classList.remove('hidden');
+            
+            // Manage active styles in Sidebar
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(`'${id}'`)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Manage active styles in Fixed Footer
+            document.querySelectorAll('.footer-item').forEach(el => el.classList.remove('active'));
+            if (id === 'dashboard') {
+                $('footer-home').classList.add('active');
+            } else if (id === 'settings') {
+                $('footer-profile').classList.add('active');
+            }
+            
+            // Close sidebar if on mobile
+            if(window.innerWidth < 900) {
+                $('sidebar').classList.remove('open');
+                $('sidebar-overlay').classList.remove('active');
+            }
+            
+            // Auto-load analytics
+            if(id === 'reports') {
+                const today = new Date();
+                const past = new Date();
+                past.setDate(today.getDate() - 30);
+                if(!$('analytics-start').value) $('analytics-start').value = past.toISOString().split('T')[0];
+                if(!$('analytics-end').value) $('analytics-end').value = today.toISOString().split('T')[0];
+                updateAnalytics();
+            }
+        };
+
+        // Fixed Open Modal Logic
+        window.openModal = (id, mode = 'edit') => {
+            $(id).classList.add('active');
+            if(id === 'item-modal') {
+                populateCategoriesDropdown();
+                if(mode === 'add') {
+                    $('modal-title').innerText = "Add Item";
+                    $('item-id').value = '';
+                    $('item-name').value = '';
+                    $('item-category').value = '';
+                    $('item-category-new').classList.add('hidden');
+                    $('item-category-new').value = '';
+                    $('item-location').value = '';
+                    $('item-cost').value = '';
+                    $('item-price').value = '';
+                    $('item-qty').value = 0;
+                    $('item-min').value = 5;
+                    $('item-image-base64').value = '';
+                    $('prev').src = '';
+                    $('prev').style.display = 'none';
+                    $('btn-delete-item').classList.add('hidden');
+                } else {
+                    $('modal-title').innerText = "Edit Item";
+                    $('btn-delete-item').classList.remove('hidden');
+                }
+            }
+        };
+        window.closeModal = (id) => $(id).classList.remove('active');
+
+        // Image Helpers
+        const readImage = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        };
+
+        // Phone Gallery Upload Change Handler
+        document.getElementById('item-image-file').addEventListener('change', async (e) => {
+            if (e.target.files && e.target.files[0]) {
+                try {
+                    const base64 = await readImage(e.target.files[0]);
+                    $('item-image-base64').value = base64;
+                    const prev = $('prev');
+                    prev.src = base64;
+                    prev.style.display = 'inline-block';
+                } catch (err) {
+                    showToast("Failed to load image from gallery", "error");
+                }
+            }
+        });
+
+        window.updateProfilePic = async (input) => {
+            if (input.files && input.files[0] && currentUserUid) {
+                try {
+                    const base64 = await readImage(input.files[0]);
+                    localStorage.setItem('avatar_' + currentUserUid, base64);
+                    $('sidebar-avatar').src = base64;
+                    $('settings-avatar').src = base64;
+                    showToast('Profile photo updated', 'success');
+                } catch (e) {
+                    showToast('Error updating photo', 'error');
+                }
+            }
+        };
+
+        // ---------------------------------------------------------
+        // 4. AUTH LOGIC (ADMIN LOGIN ONLY)
+        // ---------------------------------------------------------
+        window.authLogin = async () => {
+            const btn = $('btn-login');
+            const email = $('login-email').value;
+            const pass = $('login-password').value;
+
+            if(!email || !pass) return showToast("Please enter credentials", "error");
+
+            try {
+                btn.innerHTML = `<span>⏳</span> Signing In...`;
+                btn.disabled = true;
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (e) {
+                showToast(e.message.replace('Firebase:', '').trim(), "error");
+                btn.innerHTML = `Sign In`;
+                btn.disabled = false;
+            }
+        };
+
+        window.authLogout = () => {
+            // Data Isolation: Clear memory
+            inventory = {}; orders = {}; sales = {};
+            prevInventory = null; // Clear previous inventory tracking
+            currentUserUid = null;
+            try {
+                localStorage.setItem('isAuthenticated', 'false');
+            } catch (e) {}
+            signOut(auth);
+        };
+
+        // OPTIMIZED AUTHENTICATION BOOTSTRAPPING FLOW
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserUid = user.uid;
+                try {
+                    localStorage.setItem('isAuthenticated', 'true');
+                } catch (e) {}
+                
+                // Switch application shell state instantly
+                $('auth-container').classList.add('hidden');
+                $('app-container').classList.remove('hidden');
+                $('app-container').style.opacity = '1';
+                document.documentElement.classList.remove('pre-auth');
+                
+                // Initialize active Firebase sync channels
+                initData();
+
+                // Non-blocking asynchronous query of profile properties
+                get(ref(db, 'users/' + user.uid)).then((snap) => {
+                    const data = snap.val();
+                    const name = data ? data.name : "Admin User";
+                    const email = user.email || "";
+                    
+                    $('user-display-name').innerText = name;
+                    $('settings-name').innerText = name;
+                    $('settings-email').innerText = email;
+                    $('profile-name-input').value = name;
+                    $('profile-email-input').value = email;
+                }).catch(e => console.log("Profile background load error", e));
+
+                const savedAvatar = localStorage.getItem('avatar_' + user.uid);
+                const avatarSrc = savedAvatar || DEFAULT_AVATAR;
+                $('sidebar-avatar').src = avatarSrc;
+                $('settings-avatar').src = avatarSrc;
+            } else {
+                currentUserUid = null;
+                try {
+                    localStorage.setItem('isAuthenticated', 'false');
+                } catch (e) {}
+                $('auth-container').classList.remove('hidden');
+                $('app-container').classList.add('hidden');
+                $('app-container').style.opacity = '0';
+                document.documentElement.classList.remove('pre-auth');
+                if($('btn-login')) {
+                    $('btn-login').innerHTML = "Sign In";
+                    $('btn-login').disabled = false;
+                }
+            }
+        });
+
+        // ---------------------------------------------------------
+        // 5. DATA SYNC (ISOLATED PER ADMIN USER)
+        // ---------------------------------------------------------
+        function initData() {
+            if(!currentUserUid) return;
+            // Scoped to users/{uid}
+            onValue(ref(db, `users/${currentUserUid}/inventory`), snap => { 
+                const newInventory = snap.val() || {};
+                
+                // Track transitions to detect low stock crossing
+                if (prevInventory !== null) {
+                    Object.entries(newInventory).forEach(([k, newItem]) => {
+                        const prevItem = prevInventory[k];
+                        if (prevItem) {
+                            const wasLow = parseInt(prevItem.qty) <= parseInt(prevItem.minStock);
+                            const isLow = parseInt(newItem.qty) <= parseInt(newItem.minStock);
+                            if (isLow && !wasLow) {
+                                window.notifyLowStock(newItem);
+                            }
+                        }
+                    });
+                }
+                
+                // Keep local cache up to date
+                prevInventory = JSON.parse(JSON.stringify(newInventory));
+                
+                inventory = newInventory; 
+                renderAll(); 
+            });
+            onValue(ref(db, `users/${currentUserUid}/orders`), snap => { orders = snap.val() || {}; renderOrders(); });
+            onValue(ref(db, `users/${currentUserUid}/sales`), snap => { sales = snap.val() || {}; renderSales(); renderDash(); updateAnalytics(); });
+            
+            // Load and listen to categories persistently
+            onValue(ref(db, `users/${currentUserUid}/categories`), snap => {
+                const val = snap.val();
+                if (val && Array.isArray(val)) {
+                    categories = val;
+                } else if (val && typeof val === 'object') {
+                    categories = Object.values(val);
+                } else {
+                    categories = ['Electronics', 'Office']; // Initial default
+                }
+                populateCategoriesDropdown();
+            });
+        }
+
+        function renderAll() {
+            renderItems();
+            renderDash();
+            renderReports();
+            updateAnalytics();
+            const s = $('pos-item-select');
+            const saved = s.value;
+            s.innerHTML = '<option value="">Select...</option>';
+            const s2 = $('po-item-select');
+            s2.innerHTML = '';
+
+            Object.entries(inventory).forEach(([k,v]) => {
+                if(v.qty > 0) s.innerHTML += `<option value="${k}" data-price="${v.price}">${v.name}</option>`;
+                s2.innerHTML += `<option value="${k}">${v.name}</option>`;
+            });
+            if(saved) s.value = saved;
+        }
+
+        // ---------------------------------------------------------
+        // 6. DYNAMIC CATEGORIES LOGIC
+        // ---------------------------------------------------------
+        window.populateCategoriesDropdown = (selectedVal = '') => {
+            const select = $('item-category');
+            if(!select) return;
+            
+            select.innerHTML = '<option value="">Select Category...</option>';
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            select.innerHTML += `<option value="__NEW__">+ Add New Category</option>`;
+            
+            if (selectedVal) {
+                if (!categories.includes(selectedVal)) {
+                    categories.push(selectedVal);
+                    set(ref(db, `users/${currentUserUid}/categories`), categories);
+                }
+                select.value = selectedVal;
+            }
+        };
+
+        window.onCategorySelectChange = (select) => {
+            const newCatInput = $('item-category-new');
+            if (select.value === '__NEW__') {
+                newCatInput.classList.remove('hidden');
+                newCatInput.focus();
+            } else {
+                newCatInput.classList.add('hidden');
+            }
+        };
+
+        // ---------------------------------------------------------
+        // 7. MODULES
+        // ---------------------------------------------------------
+        
+        // DASHBOARD
+        function renderDash() {
+            let count = 0, val = 0, low = 0;
+            const t = $('dash-low-stock-table');
+            t.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            Object.entries(inventory).forEach(([k, i]) => {
+                count++;
+                val += (i.qty * i.cost);
+                if(parseInt(i.qty) <= parseInt(i.minStock)) {
+                    low++;
+                    
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    tr.innerHTML = `
+                        <td class="flex items-center gap-2">
+                            <img src="${i.image || 'https://via.placeholder.com/100'}" class="dash-list-img" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); cursor: zoom-in;">
+                            <span class="font-bold">${i.name}</span>
+                        </td>
+                        <td>${i.location}</td>
+                        <td><span class="highlight-qty low">${i.qty}</span></td>
+                        <td><span class="badge danger">Low</span></td>
+                    `;
+
+                    // Click-to-preview system on low-stock thumbnail image
+                    const img = tr.querySelector('.dash-list-img');
+                    img.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevents editing modal action
+                        openImagePreview(i.image || 'https://via.placeholder.com/100', i.name);
+                    });
+
+                    // Row action to edit
+                    tr.addEventListener('click', (e) => {
+                        if (e.target.closest('.dash-list-img')) return;
+                        editItem(k);
+                    });
+
+                    fragment.appendChild(tr);
+                }
+            });
+            t.appendChild(fragment);
+            
+            let daySales = 0;
+            const today = new Date().toDateString();
+            Object.values(sales).forEach(s => {
+                if(new Date(s.date).toDateString() === today) daySales += parseFloat(s.total);
+            });
+
+            $('dash-total-items').innerText = count;
+            $('dash-stock-value').innerText = fmt(val);
+            $('dash-low-stock').innerText = low;
+            $('dash-sales').innerText = fmt(daySales);
+        }
+
+        // OPTIMIZED INVENTORY CARD LIST (FAST DOCUMENTFRAGMENT ENGINE)
+        window.renderItems = () => {
+            const term = $('item-search').value.toLowerCase();
+            const grid = $('inventory-grid');
+            const fragment = document.createDocumentFragment();
+
+            Object.entries(inventory).forEach(([k, v]) => {
+                if (v.name.toLowerCase().includes(term) || v.sku.toLowerCase().includes(term)) {
+                    const low = parseInt(v.qty) <= parseInt(v.minStock);
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    
+                    card.innerHTML = `
+                        <div class="product-card-img-wrapper">
+                            <img class="product-card-img" src="${v.image || 'https://via.placeholder.com/150'}" alt="${v.name}" style="cursor: zoom-in;">
+                            ${low ? `<span class="badge danger product-card-badge">Low Stock</span>` : `<span class="badge success product-card-badge">In Stock</span>`}
+                        </div>
+                        <div class="product-card-body">
+                            <div class="product-card-sku">${v.sku}</div>
+                            <h4 class="product-card-title">${v.name}</h4>
+                            <div class="product-card-meta">
+                                <div>Qty: <span class="highlight-qty ${low ? 'low' : ''}">${v.qty}</span></div>
+                                <div class="highlight-price">${fmt(v.price)}</div>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Loc: ${v.location}</div>
+                        </div>
+                        <div class="product-card-footer">
+                            <button class="btn-secondary" data-action="edit">✎ Edit</button>
+                            <button class="btn-danger" data-action="delete">🗑 Delete</button>
+                        </div>
+                    `;
+
+                    // Card edit trigger (except image or button target)
+                    card.addEventListener('click', (e) => {
+                        if (e.target.closest('button') || e.target.classList.contains('product-card-img')) return;
+                        editItem(k);
+                    });
+
+                    // Premium image preview isolated listener
+                    const cardImg = card.querySelector('.product-card-img');
+                    cardImg.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openImagePreview(v.image || 'https://via.placeholder.com/150', v.name);
+                    });
+
+                    // Dynamic action selectors
+                    const editBtn = card.querySelector('[data-action="edit"]');
+                    const deleteBtn = card.querySelector('[data-action="delete"]');
+                    editBtn.addEventListener('click', (e) => { e.stopPropagation(); editItem(k); });
+                    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteItemDirectly(k); });
+
+                    fragment.appendChild(card);
+                }
+            });
+            grid.innerHTML = '';
+            grid.appendChild(fragment);
+        };
+
+        window.deleteItemDirectly = async (k) => {
+            if (confirm("Are you sure you want to delete this item?")) {
+                await remove(ref(db, `users/${currentUserUid}/inventory/${k}`));
+                showToast("Item Deleted", "success");
+            }
+        };
+
+        window.saveItem = async () => {
+            const id = $('item-id').value;
+            const cost = parseFloat($('item-cost').value)||0;
+            const price = parseFloat($('item-price').value)||0;
+            const qty = parseInt($('item-qty').value)||0;
+            const minStock = parseInt($('item-min').value)||5;
+
+            if (cost < 0 || price < 0 || qty < 0 || minStock < 0) return showToast("Values cannot be negative", "error");
+
+            let category = $('item-category').value;
+            if (category === '__NEW__') {
+                category = $('item-category-new').value.trim();
+                if (!category) return showToast("New category name required", "error");
+                if (!categories.includes(category)) {
+                    categories.push(category);
+                    await set(ref(db, `users/${currentUserUid}/categories`), categories);
+                }
+            }
+            if (!category) return showToast("Category required", "error");
+
+            const data = {
+                name: $('item-name').value,
+                category: category,
+                location: $('item-location').value,
+                cost: cost,
+                price: price,
+                qty: qty,
+                minStock: minStock,
+                image: $('item-image-base64').value,
+                updated: Date.now()
+            };
+            if(!data.name) return showToast("Name required", "error");
+
+            if(id) {
+                // Update
+                await update(ref(db, `users/${currentUserUid}/inventory/${id}`), data);
+                showToast("Item Updated", "success");
+            } else {
+                // Create
+                data.sku = 'SKU-' + Math.floor(Math.random()*10000);
+                await push(ref(db, `users/${currentUserUid}/inventory`), data);
+                showToast("Item Added", "success");
+            }
+            closeModal('item-modal');
+        };
+
+        window.editItem = (k) => {
+            const v = inventory[k];
+            $('item-id').value = k;
+            $('item-name').value = v.name;
+            
+            populateCategoriesDropdown(v.category);
+            $('item-category-new').classList.add('hidden');
+            $('item-category-new').value = '';
+
+            $('item-location').value = v.location;
+            $('item-cost').value = v.cost;
+            $('item-price').value = v.price;
+            $('item-qty').value = v.qty;
+            $('item-min').value = v.minStock;
+            
+            // Gallery base64 loading
+            $('item-image-base64').value = v.image || '';
+            const prev = $('prev');
+            if (v.image) {
+                prev.src = v.image;
+                prev.style.display = 'inline-block';
+            } else {
+                prev.src = '';
+                prev.style.display = 'none';
+            }
+            openModal('item-modal', 'edit');
+        };
+
+        window.deleteItem = async () => {
+            const id = $('item-id').value;
+            if(!id) return;
+            if(confirm("Are you sure you want to delete this item?")) {
+                await remove(ref(db, `users/${currentUserUid}/inventory/${id}`));
+                showToast("Item Deleted", "success");
+                closeModal('item-modal');
+            }
+        };
+
+        // PURCHASE
+        window.createPurchaseOrder = async () => {
+            const k = $('po-item-select').value;
+            const qty = parseInt($('po-qty').value);
+            
+            if(!k) return showToast("Select an item", "error");
+            if(qty <= 0) return showToast("Quantity must be positive", "error");
+
+            await push(ref(db, `users/${currentUserUid}/orders`), {
+                itemId: k, itemName: inventory[k].name,
+                qty: qty, supplier: $('po-supplier').value,
+                status: 'Pending', date: Date.now()
+            });
+            showToast("Order Created", "success");
+        };
+
+        function renderOrders() {
+            const t = $('po-table-body'); t.innerHTML='';
+            Object.entries(orders).sort((a,b)=>b[1].date-a[1].date).forEach(([k,v])=>{
+                const p = v.status === 'Pending';
+                t.innerHTML += `
+                    <tr>
+                        <td style="font-family:monospace">PO-${k.substr(-4)}</td>
+                        <td>${v.itemName}</td>
+                        <td>${v.supplier}</td>
+                        <td><span class="highlight-qty">${v.qty}</span></td>
+                        <td><span class="badge ${p?'warning':'success'}">${v.status}</span></td>
+                        <td>${p ? `<button class="btn-primary" style="padding:0.25rem 0.5rem; font-size:0.75rem" onclick="receiveStock('${k}')">Receive</button>` : ''}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.receiveStock = async (oid) => {
+            const o = orders[oid];
+            const itemRef = ref(db, `users/${currentUserUid}/inventory/${o.itemId}`);
+            const snap = await get(itemRef);
+            if(snap.exists()) {
+                await update(itemRef, { qty: parseInt(snap.val().qty) + parseInt(o.qty) });
+                await update(ref(db, `users/${currentUserUid}/orders/${oid}`), { status: 'Received' });
+                showToast("Stock Updated", "success");
+            }
+        };
+
+        // POS
+        window.updatePosPrice = () => {
+            const s = $('pos-item-select');
+            const p = s.options[s.selectedIndex].getAttribute('data-price')||0;
+            $('pos-price').value = p;
+            updatePosTotal();
+        };
+
+        window.updatePosTotal = () => {
+            const p = parseFloat($('pos-price').value)||0;
+            const q = parseInt($('pos-qty').value)||1;
+            const tx = parseFloat($('pos-tax').value)||0;
+            $('pos-total').innerText = ((p*q)*(1+tx/100)).toFixed(2);
+        };
+
+        window.processSale = async () => {
+            const k = $('pos-item-select').value;
+            const q = parseInt($('pos-qty').value);
+            
+            if(!k) return showToast("Select Product", "error");
+            if(q <= 0) return showToast("Invalid Quantity", "error");
+            if(q > inventory[k].qty) return showToast("Out of stock", "error");
+
+            await push(ref(db, `users/${currentUserUid}/sales`), {
+                itemId:k, itemName:inventory[k].name, qty:q, total:$('pos-total').innerText, date:new Date().toISOString()
+            });
+            await update(ref(db, `users/${currentUserUid}/inventory/${k}`), { qty: inventory[k].qty - q });
+            showToast("Sale Recorded", "success");
+            $('pos-qty').value=1; updatePosTotal();
+        };
+
+        function renderSales() {
+            const t = $('sales-history-body'); t.innerHTML='';
+            Object.values(sales).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,10).forEach(s=>{
+                t.innerHTML += `<tr><td style="font-size:0.8rem">${new Date(s.date).toLocaleTimeString()}</td><td>${s.itemName}</td><td><span class="highlight-qty">${s.qty}</span></td><td class="font-bold highlight-price">$${s.total}</td></tr>`;
+            });
+        }
+
+        // ------------------------------------------------------------------
+        // ANALYTICS & CHARTS LOGIC
+        // ------------------------------------------------------------------
+        
+        window.updateAnalytics = () => {
+            const startInput = $('analytics-start').value;
+            const endInput = $('analytics-end').value;
+            
+            if(!startInput || !endInput) return;
+
+            const start = new Date(startInput);
+            const end = new Date(endInput);
+            end.setHours(23, 59, 59);
+
+            // 1. Data Aggregation
+            const dateMap = {};
+            let totalSales = 0, totalCost = 0, totalTx = 0;
+
+            // Iterate Dates
+            for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                dateMap[d.toISOString().split('T')[0]] = { sales: 0, cost: 0, profit: 0, buyQty: 0, sellQty: 0 };
+            }
+
+            // Sales Data
+            Object.values(sales).forEach(s => {
+                const sDate = s.date.split('T')[0];
+                if(dateMap[sDate]) {
+                    const rev = parseFloat(s.total);
+                    const itemCost = inventory[s.itemId] ? inventory[s.itemId].cost : 0;
+                    const cogs = s.qty * itemCost;
+                    
+                    dateMap[sDate].sales += rev;
+                    dateMap[sDate].cost += cogs;
+                    dateMap[sDate].profit += (rev - cogs);
+                    dateMap[sDate].sellQty += parseInt(s.qty);
+                    
+                    totalSales += rev;
+                    totalCost += cogs;
+                    totalTx++;
+                }
+            });
+
+            // Purchase Data
+            Object.values(orders).forEach(o => {
+                if(o.status === 'Received') {
+                    const oDate = new Date(o.date).toISOString().split('T')[0];
+                    if(dateMap[oDate]) {
+                        dateMap[oDate].buyQty += parseInt(o.qty);
+                    }
+                }
+            });
+
+            // 2. Render KPIs
+            const totalProfit = totalSales - totalCost;
+            const margin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
+            const aov = totalTx > 0 ? (totalSales / totalTx).toFixed(2) : 0;
+
+            $('kpi-sales').innerText = fmt(totalSales);
+            $('kpi-cost').innerText = fmt(totalCost);
+            $('kpi-profit').innerText = fmt(totalProfit);
+            $('kpi-margin').innerText = margin + '% Margin';
+            $('kpi-aov').innerText = fmt(aov);
+            
+            if(totalProfit >= 0) {
+                $('kpi-profit').classList.add('text-green'); $('kpi-profit').classList.remove('text-red');
+            } else {
+                $('kpi-profit').classList.add('text-red'); $('kpi-profit').classList.remove('text-green');
+            }
+
+            // 3. Prepare Chart Data
+            const labels = Object.keys(dateMap).sort();
+            const profitData = labels.map(d => dateMap[d].profit);
+            const buyData = labels.map(d => dateMap[d].buyQty);
+            const sellData = labels.map(d => dateMap[d].sellQty);
+
+            // 4. Render Charts
+            renderLineChart(labels, profitData, 'chart-profit-container');
+            renderBarChart(labels, buyData, sellData, 'chart-volume-container');
+        };
+
+        // --- SVG CHART RENDERER ---
+        function createSvgElement(type, attrs) {
+            const el = document.createElementNS("http://www.w3.org/2000/svg", type);
+            for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+            return el;
+        }
+
+        function renderLineChart(labels, data, containerId) {
+            const container = $(containerId);
+            container.innerHTML = '';
+            if(data.length === 0) return;
+
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            const pad = 30; // Padding for labels
+            
+            const maxVal = Math.max(...data, 10);
+            const minVal = Math.min(...data, 0); 
+            const range = maxVal - minVal;
+
+            const svg = createSvgElement('svg', { class:'chart', viewBox: `0 0 ${w} ${h}` });
+            
+            // Axes
+            svg.appendChild(createSvgElement('line', { x1:pad, y1:h-pad, x2:w-pad, y2:h-pad, class:'chart-axis-line' })); // X
+            svg.appendChild(createSvgElement('line', { x1:pad, y1:pad, x2:pad, y2:h-pad, class:'chart-axis-line' })); // Y
+            
+            // Y Axis Labels (Min, Mid, Max)
+            const ySteps = 3;
+            for(let i=0; i<=ySteps; i++) {
+                const val = minVal + (range * (i/ySteps));
+                const y = (h - pad) - ((val - minVal)/range * (h - 2*pad));
+                const text = createSvgElement('text', { x: pad-5, y: y+3, class:'chart-axis-text', 'text-anchor':'end' });
+                text.textContent = Math.round(val);
+                svg.appendChild(text);
+            }
+
+            let pathD = "";
+            const step = (w - 2*pad) / (data.length - 1 || 1);
+            
+            data.forEach((val, i) => {
+                const x = pad + (i * step);
+                const normalizedY = (val - minVal) / (range || 1);
+                const y = (h - pad) - (normalizedY * (h - 2*pad));
+                
+                pathD += (i===0 ? `M ${x} ${y}` : ` L ${x} ${y}`);
+                
+                const circle = createSvgElement('circle', { cx:x, cy:y, r:3, fill:'var(--chart-line)' });
+                circle.onmouseenter = (e) => showTooltip(e, `${labels[i]}: ${fmt(val)}`);
+                circle.onmouseleave = hideTooltip;
+                svg.appendChild(circle);
+            });
+
+            if(pathD) svg.appendChild(createSvgElement('path', { d:pathD, class:'chart-line-path' }));
+            container.appendChild(svg);
+        }
+
+        function renderBarChart(labels, buys, sells, containerId) {
+            const container = $(containerId);
+            container.innerHTML = '';
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            const pad = 30;
+
+            const maxVal = Math.max(...buys, ...sells, 5);
+            const step = (w - 2*pad) / labels.length;
+            const barW = Math.max(step * 0.3, 2);
+
+            const svg = createSvgElement('svg', { class:'chart', viewBox: `0 0 ${w} ${h}` });
+            svg.appendChild(createSvgElement('line', { x1:pad, y1:h-pad, x2:w-pad, y2:h-pad, class:'chart-axis-line' }));
+            svg.appendChild(createSvgElement('line', { x1:pad, y1:pad, x2:pad, y2:h-pad, class:'chart-axis-line' }));
+
+            // Y Axis Labels
+            const textMax = createSvgElement('text', { x: pad-5, y: pad, class:'chart-axis-text', 'text-anchor':'end' });
+            textMax.textContent = maxVal;
+            svg.appendChild(textMax);
+
+            labels.forEach((lbl, i) => {
+                const xCenter = pad + (i * step) + (step/2);
+                
+                // Buy Bar
+                const buyH = (buys[i] / maxVal) * (h - 2*pad);
+                const buyRect = createSvgElement('rect', {
+                    x: xCenter - barW, y: (h - pad) - buyH, width: barW, height: buyH,
+                    fill: 'var(--chart-bar-buy)', class: 'chart-bar'
+                });
+                buyRect.onmouseenter = (e) => showTooltip(e, `${lbl} Bought: ${buys[i]}`);
+                buyRect.onmouseleave = hideTooltip;
+                svg.appendChild(buyRect);
+
+                // Sell Bar
+                const sellH = (sells[i] / maxVal) * (h - 2*pad);
+                const sellRect = createSvgElement('rect', {
+                    x: xCenter, y: (h - pad) - sellH, width: barW, height: sellH,
+                    fill: 'var(--chart-bar-sell)', class: 'chart-bar'
+                });
+                sellRect.onmouseenter = (e) => showTooltip(e, `${lbl} Sold: ${sells[i]}`);
+                sellRect.onmouseleave = hideTooltip;
+                svg.appendChild(sellRect);
+            });
+
+            container.appendChild(svg);
+        }
+
+        let tooltipEl = null;
+        function showTooltip(e, text) {
+            if(!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.className = 'chart-tooltip';
+                document.body.appendChild(tooltipEl);
+            }
+            const rect = e.target.getBoundingClientRect();
+            tooltipEl.innerText = text;
+            tooltipEl.style.left = (rect.left + window.scrollX) + 'px';
+            tooltipEl.style.top = (rect.top + window.scrollY - 30) + 'px';
+            tooltipEl.style.opacity = 1;
+        }
+        function hideTooltip() {
+            if(tooltipEl) tooltipEl.style.opacity = 0;
+        }
+
+
+        // VISUAL REPORTS (With Click-to-Preview Enabled)
+        window.renderReports = () => {
+            const c = $('report-grid-container'); c.innerHTML='';
+            const f = $('report-filter').value;
+            const fragment = document.createDocumentFragment();
+
+            Object.values(inventory).forEach(i => {
+                if(f==='lowstock' && i.qty > i.minStock) return;
+                
+                const imgCard = document.createElement('div');
+                imgCard.className = 'img-card';
+                imgCard.innerHTML = `
+                    <img src="${i.image||'https://via.placeholder.com/150'}" style="cursor: zoom-in;">
+                    <div class="img-details">
+                        <div class="font-bold">${i.name}</div>
+                        <div class="flex justify-between text-xs text-muted" style="margin-top:4px;">
+                            <span>Qty: <span class="highlight-qty">${i.qty}</span></span>
+                            <span class="highlight-price">${fmt(i.price)}</span>
+                        </div>
+                    </div>
+                `;
+
+                const img = imgCard.querySelector('img');
+                img.addEventListener('click', () => {
+                    openImagePreview(i.image || 'https://via.placeholder.com/150', i.name);
+                });
+
+                fragment.appendChild(imgCard);
+            });
+            c.appendChild(fragment);
+        };
+
+        // PROFILE SETTINGS
+        window.updateUserProfile = async () => {
+            const name = $('profile-name-input').value;
+            const email = $('profile-email-input').value;
+            const user = auth.currentUser;
+
+            if(!user) return;
+
+            try {
+                if(name && name !== user.displayName) {
+                    await updateProfile(user, { displayName: name });
+                    await update(ref(db, `users/${user.uid}`), { name: name });
+                }
+                if(email && email !== user.email) {
+                    await updateEmail(user, email);
+                    await update(ref(db, `users/${user.uid}`), { email: email });
+                }
+                showToast("Profile Updated", "success");
+            } catch(e) {
+                showToast(e.message, "error");
+            }
+        };
+
+        // Secure Password Logic with Old Pass Verification & Reset Fallback
+        window.updateUserPassword = async () => {
+            const oldPass = $('profile-old-pass').value;
+            const newPass = $('profile-new-pass').value;
+            const confirmPass = $('profile-confirm-pass').value;
+            const user = auth.currentUser;
+
+            // Reset UI state
+            $('forgot-pass-container').classList.add('hidden');
+
+            if(!oldPass || !newPass || !confirmPass) return showToast("All password fields are required", "error");
+            if(newPass !== confirmPass) return showToast("New passwords do not match", "error");
+            if(newPass.length < 6) return showToast("Password too short", "error");
+
+            try {
+                // 1. Re-authenticate
+                const credential = EmailAuthProvider.credential(user.email, oldPass);
+                await reauthenticateWithCredential(user, credential);
+
+                // 2. Update
+                await updatePassword(user, newPass);
+                
+                showToast("Password changed successfully", "success");
+                
+                // Clear inputs
+                $('profile-old-pass').value = '';
+                $('profile-new-pass').value = '';
+                $('profile-confirm-pass').value = '';
+
+            } catch(e) {
+                console.error(e);
+                // Check if error is related to incorrect password
+                if(e.code === 'auth/wrong-password' || e.message.includes('password')) {
+                    showToast("Incorrect Old Password", "error");
+                    // Trigger Forgot Password Option
+                    $('forgot-pass-container').classList.remove('hidden');
+                } else {
+                    showToast(e.message, "error");
+                }
+            }
+        };
+
+        window.triggerPasswordReset = async () => {
+             const user = auth.currentUser;
+             if(!user || !user.email) return showToast("Error identifying user", "error");
+             
+             try {
+                 await sendPasswordResetEmail(auth, user.email);
+                 showToast(`Reset email sent to ${user.email}`, "success");
+                 $('forgot-pass-container').classList.add('hidden');
+             } catch(e) {
+                 showToast(e.message, "error");
+             }
+        };
+
+        // ---------------------------------------------------------
+        // 8. FACTORY RESET DATABASE ONLY (SCOPED DATA WIPEOUT)
+        // ---------------------------------------------------------
+        window.factoryResetInventory = async () => {
+            if (!currentUserUid) return;
+            const confirmFirst = confirm("⚠️ WARNING: This will permanently wipe all products, stock history, procurement orders, and transaction records! Are you absolutely sure?");
+            if (confirmFirst) {
+                const checkString = prompt("To confirm deletion, please type 'RESET' in the box below:");
+                if (checkString === "RESET") {
+                    try {
+                        await remove(ref(db, `users/${currentUserUid}/inventory`));
+                        await remove(ref(db, `users/${currentUserUid}/orders`));
+                        await remove(ref(db, `users/${currentUserUid}/sales`));
+                        await remove(ref(db, `users/${currentUserUid}/categories`));
+                        showToast("Inventory database successfully wiped!", "success");
+                    } catch(e) {
+                        showToast("Reset failed: " + e.message, "error");
+                    }
+                } else {
+                    showToast("Wipe cancelled. Confirmation input did not match.", "error");
+                }
+            }
+        };
+
+    </script>
+</body>
+</html>
